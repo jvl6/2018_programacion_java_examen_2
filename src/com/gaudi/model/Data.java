@@ -106,19 +106,19 @@ public class Data {
 
         return g;
     }
-    
+
     public List<Sala> selectSala() throws SQLException {
         String query = "SELECT * FROM sala;";
         ResultSet rs = con.ejecutarSelect(query);
-        
+
         List<Sala> s = new ArrayList<>();
-        
-        while (rs.next()) {            
-            Sala sa = new Sala(rs.getInt(1), rs.getString(2), rs.getInt(3), 
+
+        while (rs.next()) {
+            Sala sa = new Sala(rs.getInt(1), rs.getString(2), rs.getInt(3),
                     rs.getFloat(4), rs.getBoolean(5), rs.getBoolean(6), rs.getString(7));
             s.add(sa);
         }
-        
+
         return s;
     }
 
@@ -140,7 +140,7 @@ public class Data {
 
     public void createObra(int codigo, String nombre, int anio, float alto,
             float ancho, String tecnica, String genero, String autor, String sala) throws SQLException {
-        
+
         String query = "CALL crearObra (" + codigo + ",'"
                 + nombre + "','"
                 + anio + "',"
@@ -152,5 +152,59 @@ public class Data {
                 + sala + "');";
         con.ejecutar(query);
         con.close();
+    }
+
+    public void deleteObra(int codigo) throws SQLException {
+        String query = "DELETE FROM obra WHERE codigo = " + codigo + ";";
+        con.ejecutar(query);
+        con.close();
+    }
+
+    public List<ViewObra> filterObraSala(String sala) throws SQLException {
+        String query = "SELECT * FROM viewObra WHERE nombreSala = '" + sala + "';";
+        ResultSet rs = con.ejecutarSelect(query);
+
+        List<ViewObra> o = new ArrayList<>();
+
+        while (rs.next()) {
+            ViewObra v = new ViewObra(rs.getInt(1), rs.getString(2), rs.getInt(3),
+                    rs.getFloat(4), rs.getFloat(5), rs.getString(6), rs.getString(7),
+                    rs.getString(8), rs.getString(9));
+            o.add(v);
+        }
+
+        return o;
+    }
+
+    public List<ViewObra> filterObraNombre(String nombre) throws SQLException {
+        String query = "SELECT * FROM viewObra WHERE nombreObra LIKE '%" + nombre + "%';";
+        ResultSet rs = con.ejecutarSelect(query);
+
+        List<ViewObra> o = new ArrayList<>();
+
+        while (rs.next()) {
+            ViewObra v = new ViewObra(rs.getInt(1), rs.getString(2), rs.getInt(3),
+                    rs.getFloat(4), rs.getFloat(5), rs.getString(6), rs.getString(7),
+                    rs.getString(8), rs.getString(9));
+            o.add(v);
+        }
+
+        return o;
+    }
+
+    public List<ViewObra> filterObraNombreSala(String nombre, String sala) throws SQLException {
+        String query = "SELECT * FROM viewObra WHERE nombreObra LIKE '%" + nombre + "%' AND nombreSala = '" + sala + "';";
+        ResultSet rs = con.ejecutarSelect(query);
+
+        List<ViewObra> o = new ArrayList<>();
+
+        while (rs.next()) {
+            ViewObra v = new ViewObra(rs.getInt(1), rs.getString(2), rs.getInt(3),
+                    rs.getFloat(4), rs.getFloat(5), rs.getString(6), rs.getString(7),
+                    rs.getString(8), rs.getString(9));
+            o.add(v);
+        }
+
+        return o;
     }
 }

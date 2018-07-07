@@ -21,7 +21,6 @@ public class Login extends javax.swing.JFrame {
             this.d = new Data();
         } catch (ClassNotFoundException | SQLException e) {
         }
-
         initComponents();
         initGui();
     }

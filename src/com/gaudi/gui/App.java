@@ -22,8 +22,10 @@ public class App extends javax.swing.JFrame {
 
     Data d;
     TableModelObras tmO;
+    boolean first;
 
     public App() {
+        this.first = true;
         try {
             this.d = new Data();
         } catch (ClassNotFoundException | SQLException e) {
@@ -42,10 +44,23 @@ public class App extends javax.swing.JFrame {
         tblObras.setModel(tmO);
         setResizable(true);
 
-        cboObraSala.removeAllItems();
-        String[] cboObraSalaItems = {"Todas"};
-        for (String c : cboObraSalaItems) {
-            cboObraSala.addItem(c);
+        try {
+            List<Sala> s = this.d.selectSala();
+            cboObraSala.removeAllItems();
+            String[] cboObraSalaItems = {"Todas"};
+            for (String c : cboObraSalaItems) {
+                cboObraSala.addItem(c);
+            }
+            for (Sala sala : s) {
+                cboObraSala.addItem(sala.getNombreSala());
+            }
+
+            cboSala.removeAllItems();
+            for (Sala sala : s) {
+                cboSala.addItem(sala.getNombreSala());
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         btnBorrar.setEnabled(false);
@@ -80,15 +95,7 @@ public class App extends javax.swing.JFrame {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        try {
-            List<Sala> s = this.d.selectSala();
-            cboSala.removeAllItems();
-            for (Sala sala : s) {
-                cboSala.addItem(sala.getNombreSala());
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        this.first = false;
     }
 
     private void resetComponents() {
@@ -102,6 +109,8 @@ public class App extends javax.swing.JFrame {
         spnAncho.setValue(0);
         cboSala.setSelectedIndex(0);
         txtCodigo.requestFocus();
+        btnCrear.setEnabled(true);
+        btnBorrar.setEnabled(false);
     }
 
     private void loadTblObra() {
@@ -118,13 +127,82 @@ public class App extends javax.swing.JFrame {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private void reloadTblObra() {
         for (int i = tmO.getRowCount() - 1; i > -1; i--) {
             tmO.removeRow(i);
         }
-        
+
         loadTblObra();
+    }
+
+    private void filterTblObraSala(String sala) {
+        for (int i = tmO.getRowCount() - 1; i > -1; i--) {
+            tmO.removeRow(i);
+        }
+
+        try {
+            List<ViewObra> v = this.d.filterObraSala(sala);
+            for (ViewObra viewObra : v) {
+                Object[] viewObject = {viewObra.getCodigo(), viewObra.getNombreObra(),
+                    viewObra.getAnio(), viewObra.getAlto() + " x " + viewObra.getAncho(),
+                    viewObra.getTecnica(), viewObra.getGenero(), viewObra.getNombreAutor(),
+                    viewObra.getNombreSala()};
+                tmO.addRow(viewObject);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void filterTblObraNombre(String nombre) {
+        for (int i = tmO.getRowCount() - 1; i > -1; i--) {
+            tmO.removeRow(i);
+        }
+
+        try {
+            List<ViewObra> v = this.d.filterObraNombre(nombre);
+            for (ViewObra viewObra : v) {
+                Object[] viewObject = {viewObra.getCodigo(), viewObra.getNombreObra(),
+                    viewObra.getAnio(), viewObra.getAlto() + " x " + viewObra.getAncho(),
+                    viewObra.getTecnica(), viewObra.getGenero(), viewObra.getNombreAutor(),
+                    viewObra.getNombreSala()};
+                tmO.addRow(viewObject);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void filterTblObraNombreSala(String nombre, String sala) {
+        for (int i = tmO.getRowCount() - 1; i > -1; i--) {
+            tmO.removeRow(i);
+        }
+
+        try {
+            List<ViewObra> v = this.d.filterObraNombreSala(nombre, sala);
+            for (ViewObra viewObra : v) {
+                Object[] viewObject = {viewObra.getCodigo(), viewObra.getNombreObra(),
+                    viewObra.getAnio(), viewObra.getAlto() + " x " + viewObra.getAncho(),
+                    viewObra.getTecnica(), viewObra.getGenero(), viewObra.getNombreAutor(),
+                    viewObra.getNombreSala()};
+                tmO.addRow(viewObject);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void enableComponents(boolean state) {
+        txtCodigo.setEnabled(state);
+        txtNombre.setEnabled(state);
+        cboAutor.setEnabled(state);
+        cboTecnica.setEnabled(state);
+        cboGenero.setEnabled(state);
+        txtAnio.setEnabled(state);
+        spnAlto.setEnabled(state);
+        spnAncho.setEnabled(state);
+        cboSala.setEnabled(state);
     }
 
     @SuppressWarnings("unchecked")
@@ -203,6 +281,11 @@ public class App extends javax.swing.JFrame {
         });
 
         btnBorrar.setText("Borrar");
+        btnBorrar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBorrarActionPerformed(evt);
+            }
+        });
 
         btnCrear.setText("Crear");
         btnCrear.addActionListener(new java.awt.event.ActionListener() {
@@ -316,9 +399,25 @@ public class App extends javax.swing.JFrame {
 
             }
         ));
+        tblObras.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                tblObrasMouseReleased(evt);
+            }
+        });
         jScrollPane1.setViewportView(tblObras);
 
         cboObraSala.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cboObraSala.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                cboObraSalaPropertyChange(evt);
+            }
+        });
+
+        txtBuscarObra.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtBuscarObraKeyReleased(evt);
+            }
+        });
 
         jLabel10.setText("Filtrar por Sala:");
 
@@ -388,6 +487,7 @@ public class App extends javax.swing.JFrame {
     }//GEN-LAST:event_miSalirActionPerformed
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
+        enableComponents(true);
         resetComponents();
     }//GEN-LAST:event_btnCancelarActionPerformed
 
@@ -396,6 +496,11 @@ public class App extends javax.swing.JFrame {
             int codigo = Integer.parseInt(txtCodigo.getText());
             String nombre = txtNombre.getText();
             int anio = Integer.parseInt(txtAnio.getText());
+            if (String.valueOf(anio).length() > 4) {
+                resetComponents();
+                JOptionPane.showMessageDialog(this, "El año ingresado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             float alto = Float.parseFloat(spnAlto.getValue().toString());
             float ancho = Float.parseFloat(spnAncho.getValue().toString());
             String tecnica = (String) cboTecnica.getSelectedItem();
@@ -407,7 +512,7 @@ public class App extends javax.swing.JFrame {
 
             resetComponents();
             reloadTblObra();
-            
+
             JOptionPane.showMessageDialog(this, "Obra creada.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
         } catch (HeadlessException | NumberFormatException | SQLException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
@@ -416,6 +521,67 @@ public class App extends javax.swing.JFrame {
                     + "Inténtelo nuevamente", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnCrearActionPerformed
+
+    private void tblObrasMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblObrasMouseReleased
+        if (evt.getClickCount() == 2) {
+            txtCodigo.setText(tblObras.getValueAt(tblObras.getSelectedRow(), 0).toString());
+            txtNombre.setText((String) tblObras.getValueAt(tblObras.getSelectedRow(), 1));
+            cboAutor.setSelectedItem(tblObras.getValueAt(tblObras.getSelectedRow(), 6));
+            cboTecnica.setSelectedItem(tblObras.getValueAt(tblObras.getSelectedRow(), 4));
+            cboGenero.setSelectedItem(tblObras.getValueAt(tblObras.getSelectedRow(), 5));
+            txtAnio.setText(tblObras.getValueAt(tblObras.getSelectedRow(), 2).toString());
+            String[] dimensiones = tblObras.getValueAt(tblObras.getSelectedRow(), 3).toString().trim().split("x");
+            spnAlto.setValue(Float.parseFloat(dimensiones[0]));
+            spnAncho.setValue(Float.parseFloat(dimensiones[1]));
+            cboSala.setSelectedItem(tblObras.getValueAt(tblObras.getSelectedRow(), 7));
+            btnCrear.setEnabled(false);
+            btnBorrar.setEnabled(true);
+
+            enableComponents(false);
+        }
+    }//GEN-LAST:event_tblObrasMouseReleased
+
+    private void btnBorrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBorrarActionPerformed
+        try {
+            int deleteconfirm = JOptionPane.showConfirmDialog(this,
+                    "¿Desea borrar la obra seleccionada?", "Confirmación",
+                    JOptionPane.YES_NO_OPTION);
+            if (deleteconfirm == JOptionPane.YES_OPTION) {
+                this.d.deleteObra(Integer.parseInt(txtCodigo.getText()));
+                reloadTblObra();
+                resetComponents();
+            } else {
+                resetComponents();
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnBorrarActionPerformed
+
+    private void cboObraSalaPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_cboObraSalaPropertyChange
+        if (this.first) {
+            return;
+        }
+
+        String sala = (String) cboObraSala.getSelectedItem();
+        if (sala.equals("Todas")) {
+            reloadTblObra();
+        } else {
+            filterTblObraSala(sala);
+        }
+    }//GEN-LAST:event_cboObraSalaPropertyChange
+
+    private void txtBuscarObraKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarObraKeyReleased
+        String sala = (String) cboObraSala.getSelectedItem();
+        String nombre = txtBuscarObra.getText();
+
+        if (!sala.equals("Todas")) {
+            filterTblObraNombreSala(nombre, sala);
+        } else {
+            filterTblObraNombre(nombre);
+        }
+    }//GEN-LAST:event_txtBuscarObraKeyReleased
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */

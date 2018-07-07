@@ -139,10 +139,12 @@ INSERT INTO autor VALUES(NULL, 'Salvador Dalí');
 
 /*ENCARGADOS*/
 INSERT INTO encargado VALUES('11234253-2', 'Manuel Fuensalida', 'Profesor de Arte', '2018-01-01');
+INSERT INTO encargado VALUES('16019515-0', 'Josefina Pérez', 'Crítico de Arte', '2010-05-03');
 -- SELECT * FROM encargado;
 
 /*SALAS*/
 INSERT INTO sala VALUES(NULL, 'Picasso', 10, 19.5, true, true, '11234253-2');
+INSERT INTO sala VALUES(NULL, 'Gaudí', 15, 21.0, true, true, '16019515-0');
 -- SELECT * FROM sala;
 
 /*OBRA*/
